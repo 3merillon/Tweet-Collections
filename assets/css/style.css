@@ -1,0 +1,111 @@
+/* Styles for the Tweet Collection plugin */
+.tweet-collection {
+    margin: 20px 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center; /* Center tweet embeds horizontally */
+}
+
+.tweet-collection .loading {
+    text-align: center;
+    margin: 20px 0;
+}
+
+.tweet-collection .loading img {
+    width: 30px;
+    height: 30px;
+}
+
+.collection {
+    border-bottom: 2px solid #ccc;
+    padding-bottom: 10px;
+    margin-bottom: 20px;
+}
+
+.collection h3 {
+    color: #0073aa;
+    margin: 0;
+    padding: 0;
+}
+
+.collection .toggle-tweets {
+    color: blue;
+    font-weight: bold;
+    cursor: pointer;
+    margin-left: 10px;
+}
+
+.collection form {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.collection form button {
+    border-radius: 5px;
+}
+
+.tweets-list {
+    display: none;
+    margin-top: 0;
+    padding-top: 0;
+    transition: all 0.3s ease;
+}
+
+.tweet {
+    margin-bottom: 10px;
+    width: 100%; /* Ensure each tweet takes up the full width */
+    max-width: 550px; /* Optional: set a max width for the tweets */
+    text-align: center; /* Center the tweet embed */
+}
+
+.tweet iframe {
+    margin: 0 auto; /* Center the iframe within the tweet container */
+}
+
+.tweet p {
+    margin: 0;
+    padding: 0;
+}
+
+.tweet form {
+    margin-top: 5px;
+}
+
+.tweet form button {
+    background-color: #ff9999;
+    color: #fff;
+    border: none;
+    padding: 5px 10px;
+    cursor: pointer;
+    border-radius: 5px;
+}
+
+.tweet li {
+    border-bottom: 1px dotted #ccc;
+    padding-bottom: 10px;
+    margin-bottom: 10px;
+}
+
+.tweet li:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+    margin-bottom: 0;
+}
+
+/* Add CSS for rotating "C" loading icon */
+.loading-icon {
+    font-size: 36px; /* Make the "C" bigger */
+    font-weight: bold; /* Make the "C" bold */
+    color: #ff7314; /* Orange color */
+    animation: rotate 1s linear infinite;
+}
+
+@keyframes rotate {
+    0% {
+        transform: rotate(0deg);
+    }
+    100% {
+        transform: rotate(360deg);
+    }
+}
