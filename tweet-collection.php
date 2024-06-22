@@ -10,7 +10,7 @@
 
 // MIT License
 // 
-// Copyright (c) [2024] [Cyril Monkewitz]
+// Copyright (c) 2024 Cyril Monkewitz
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -97,6 +97,7 @@ add_action('wp_enqueue_scripts', 'tweet_collection_frontend_enqueue_scripts');
 function tweet_collection_frontend_enqueue_scripts() {
     wp_enqueue_style('tweet-collection-style', TWEET_COLLECTION_PLUGIN_URL . 'assets/css/style.css');
     wp_enqueue_script('tweet-collection-script', TWEET_COLLECTION_PLUGIN_URL . 'assets/js/script.js', array('jquery'), null, true);
+    wp_localize_script('tweet-collection-script', 'ajaxurl', admin_url('admin-ajax.php'));
 }
 
 // Register shortcode for embedding tweet collections.
@@ -109,4 +110,23 @@ function tweet_collection_shortcode($atts) {
     ob_start();
     include TWEET_COLLECTION_PLUGIN_DIR . 'templates/collection-template.php';
     return ob_get_clean();
+}
+
+// Register AJAX handler for fetching tweet embed code.
+add_action('wp_ajax_get_tweet_embed', 'get_tweet_embed');
+add_action('wp_ajax_nopriv_get_tweet_embed', 'get_tweet_embed');
+
+function get_tweet_embed() {
+    if (!isset($_POST['tweet_url'])) {
+        wp_send_json_error('No tweet URL provided.');
+    }
+
+    $tweet_url = sanitize_text_field($_POST['tweet_url']);
+    $embed_code = wp_oembed_get($tweet_url);
+
+    if ($embed_code) {
+        wp_send_json_success($embed_code);
+    } else {
+        wp_send_json_error('Unable to fetch embed code.');
+    }
 }

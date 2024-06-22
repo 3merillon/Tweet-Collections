@@ -14,16 +14,9 @@ if ($tweets) {
         // Only show the first 3 tweets initially
         $style = $index >= 3 ? 'style="display:none;"' : '';
         $tweet_url = 'https://twitter.com/' . esc_attr($tweet->account_name) . '/status/' . esc_attr($tweet->tweet_id);
-        $embed_code = wp_oembed_get($tweet_url);
-        if ($embed_code) {
-            echo '<div class="tweet" ' . $style . '>';
-            echo $embed_code;
-            echo '</div>';
-        } else {
-            echo '<div class="tweet" ' . $style . '>';
-            echo '<p>Unable to embed tweet: ' . esc_html($tweet_url) . '</p>';
-            echo '</div>';
-        }
+        echo '<div class="tweet" ' . $style . ' data-tweet-url="' . esc_attr($tweet_url) . '">';
+        echo '<div class="tweet-placeholder">Loading tweet...</div>';
+        echo '</div>';
     }
     // Add a loading zone at the bottom
     echo '<div class="loading-zone" style="text-align: center; margin: 20px 0;"><div class="loading-icon">C</div></div>';

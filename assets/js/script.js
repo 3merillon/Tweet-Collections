@@ -12,20 +12,46 @@ jQuery(document).ready(function($) {
         if (hiddenTweets.length > 0) {
             var tweet = hiddenTweets.first();
             tweet.slideDown(function() {
-                waitForHeightStabilization(tweet, function() {
-                    isLoading = false;
-                    // Check if more tweets need to be loaded
-                    if (hiddenTweets.length > 1) {
-                        checkLoadingZoneVisibility();
-                    } else {
-                        loadingIndicator.hide();
-                    }
+                loadTweetEmbed(tweet, function() {
+                    waitForHeightStabilization(tweet, function() {
+                        isLoading = false;
+                        // Check if more tweets need to be loaded
+                        if (hiddenTweets.length > 1) {
+                            checkLoadingZoneVisibility();
+                        } else {
+                            loadingIndicator.hide();
+                        }
+                    });
                 });
             });
         } else {
             isLoading = false;
             loadingIndicator.hide();
         }
+    }
+
+    function loadTweetEmbed(tweet, callback) {
+        var tweetUrl = tweet.data('tweet-url');
+        $.ajax({
+            url: ajaxurl,
+            type: 'POST',
+            data: {
+                action: 'get_tweet_embed',
+                tweet_url: tweetUrl
+            },
+            success: function(response) {
+                if (response.success) {
+                    tweet.html(response.data);
+                } else {
+                    tweet.html('<p>Unable to embed tweet: ' + tweetUrl + '</p>');
+                }
+                callback();
+            },
+            error: function() {
+                tweet.html('<p>Unable to embed tweet: ' + tweetUrl + '</p>');
+                callback();
+            }
+        });
     }
 
     function waitForHeightStabilization(element, callback) {
@@ -73,7 +99,12 @@ jQuery(document).ready(function($) {
     });
 
     // Initially hide all tweets except the first 3.
-    tweetContainer.find('.tweet').hide().slice(0, 3).show();
+    tweetContainer.find('.tweet').hide().slice(0, 3).each(function() {
+        var tweet = $(this);
+        loadTweetEmbed(tweet, function() {
+            tweet.show();
+        });
+    });
 
     // Check loading zone visibility after initial tweets are shown
     setTimeout(checkLoadingZoneVisibility, 100);
