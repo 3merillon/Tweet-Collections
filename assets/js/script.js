@@ -3,6 +3,7 @@ jQuery(document).ready(function($) {
     var loadingZone = $('.loading-zone');
     var loadingIndicator = $('.loading-icon');
     var isLoading = false;
+    var initialTweets = parseInt(tweetContainer.data('initial-tweets')) || 3; // Get initial tweets from data attribute or default to 3
 
     function loadMoreTweets() {
         if (isLoading) return;
@@ -13,7 +14,7 @@ jQuery(document).ready(function($) {
             var tweet = hiddenTweets.first();
             tweet.slideDown(function() {
                 loadTweetEmbed(tweet, function() {
-                    waitForHeightStabilization(tweet, function() {
+                    waitForLoadingBarToDisappear(tweet, function() {
                         isLoading = false;
                         // Check if more tweets need to be loaded
                         if (hiddenTweets.length > 1) {
@@ -32,6 +33,7 @@ jQuery(document).ready(function($) {
 
     function loadTweetEmbed(tweet, callback) {
         var tweetUrl = tweet.data('tweet-url');
+
         $.ajax({
             url: ajaxurl,
             type: 'POST',
@@ -54,15 +56,12 @@ jQuery(document).ready(function($) {
         });
     }
 
-    function waitForHeightStabilization(element, callback) {
-        var lastHeight = element.height();
+    function waitForLoadingBarToDisappear(element, callback) {
+        var loadingBar = element.find('.loading-bar');
         var interval = setInterval(function() {
-            var newHeight = element.height();
-            if (newHeight === lastHeight) {
+            if (!loadingBar.is(':visible')) {
                 clearInterval(interval);
                 callback();
-            } else {
-                lastHeight = newHeight;
             }
         }, 100); // Check every 100ms
     }
@@ -98,8 +97,8 @@ jQuery(document).ready(function($) {
         subtree: true
     });
 
-    // Initially hide all tweets except the first 3.
-    tweetContainer.find('.tweet').hide().slice(0, 3).each(function() {
+    // Initially hide all tweets except the first `initialTweets`.
+    tweetContainer.find('.tweet').hide().slice(0, initialTweets).each(function() {
         var tweet = $(this);
         loadTweetEmbed(tweet, function() {
             tweet.show();

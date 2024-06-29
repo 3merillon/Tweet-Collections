@@ -4,6 +4,9 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
+// Include necessary files.
+require_once TWEET_COLLECTION_PLUGIN_DIR . 'includes/tweet-functions.php';
+
 // Add admin menu.
 add_action('admin_menu', 'tweet_collection_admin_menu');
 function tweet_collection_admin_menu() {
@@ -96,6 +99,33 @@ if (isset($_POST['add_tweet'])) {
     }
 }
 
+if (isset($_POST['add_tweet_between'])) {
+    $collection_id = intval($_POST['collection_id']);
+    $tweet_id = sanitize_text_field($_POST['tweet_id']);
+    $account_name = sanitize_text_field($_POST['account_name']);
+    $insert_after_tweet_id = intval($_POST['insert_after_tweet_id']);
+    if (!empty($tweet_id)) {
+        if (empty($account_name)) {
+            $account_name = get_collection_account_name($collection_id);
+        }
+        if (function_exists('add_tweet_to_collection_between')) {
+            if (!add_tweet_to_collection_between($collection_id, $tweet_id, $account_name, $insert_after_tweet_id)) {
+                add_action('admin_notices', function() {
+                    echo '<div class="notice notice-error is-dismissible"><p>Invalid Tweet credentials, please verify the "Tweet ID" and "Account Name".</p></div>';
+                });
+            }
+        } else {
+            add_action('admin_notices', function() {
+                echo '<div class="notice notice-error is-dismissible"><p>Function add_tweet_to_collection_between not found.</p></div>';
+            });
+        }
+    } else {
+        add_action('admin_notices', function() {
+            echo '<div class="notice notice-error is-dismissible"><p>Tweet ID cannot be empty.</p></div>';
+        });
+    }
+}
+
 if (isset($_POST['delete_tweet'])) {
     $tweet_id = intval($_POST['tweet_id']);
     if (function_exists('delete_tweet_from_collection')) {
@@ -107,6 +137,13 @@ if (isset($_POST['delete_tweet'])) {
     }
 }
 
+// Save initial number of tweets setting for each collection
+if (isset($_POST['initial_tweets']) && isset($_POST['collection_id'])) {
+    $initial_tweets = intval($_POST['initial_tweets']);
+    $collection_id = intval($_POST['collection_id']);
+    update_post_meta($collection_id, 'initial_tweets', $initial_tweets);
+}
+
 // Display tweet collections.
 function display_tweet_collections() {
     global $wpdb;
@@ -115,6 +152,7 @@ function display_tweet_collections() {
         foreach ($collections as $collection) {
             $account_name_display = !empty($collection->account_name) ? ' (' . esc_html($collection->account_name) . ')' : '';
             $shortcode = '[tweet_collection id="' . esc_html($collection->id) . '"]';
+            $initial_tweets = get_post_meta($collection->id, 'initial_tweets', true) ?: 3; // Default to 3 if not set
             echo '<div class="collection" data-collection-id="' . esc_attr($collection->id) . '" style="border-bottom: 2px solid #ccc; padding-bottom: 10px; margin-bottom: 10px;">';
             echo '<div style="display: flex; align-items: center; justify-content: space-between; padding-bottom:10px;">';
             echo '<div style="display: flex; align-items: center;">';
@@ -122,6 +160,13 @@ function display_tweet_collections() {
             echo '<span id="toggle-tweets-' . esc_attr($collection->id) . '" class="toggle-tweets" data-collection-id="' . esc_attr($collection->id) . '" style="color: blue; font-weight: bold; cursor: pointer; margin-left: 10px;">▼</span>';
             echo '<span style="color: #ff7314; margin-left: 10px;">' . esc_html($shortcode) . '</span>';
             echo '<span class="copy-shortcode" data-shortcode="' . esc_attr($shortcode) . '" style="cursor: pointer; margin-left: 10px;">📋</span>';
+            // Add input for initial number of tweets
+            echo '<form method="post" action="" style="margin-left: 10px; display: flex; align-items: center;">';
+            echo '<label for="initial_tweets" style="margin-right: 10px;">Initial number of tweets:</label>';
+            echo '<input type="number" name="initial_tweets" value="' . esc_attr($initial_tweets) . '" style="width: 60px; margin-right: 10px;">';
+            echo '<input type="hidden" name="collection_id" value="' . esc_attr($collection->id) . '">';
+            echo '<button type="submit" style="background-color: #0073aa; color: #fff; border: none; padding: 5px 10px; cursor: pointer; border-radius: 5px;">Save</button>';
+            echo '</form>';
             echo '</div>';
             echo '<form method="post" action="" onsubmit="return confirm(\'This will delete this entire Tweet Collection. Are you sure you wish to proceed?\');">';
             echo '<input type="hidden" name="collection_id" value="' . esc_attr($collection->id) . '">';
@@ -129,12 +174,12 @@ function display_tweet_collections() {
             echo '</form>';
             echo '</div>';
             echo '<hr class="before-add-tweet" style="border-top: 1px dotted #ccc; margin: 0;">';
-            echo '<form method="post" action="" style="display: flex; align-items: center; gap: 10px;">';
+            echo '<form id="add-tweet-form-' . esc_attr($collection->id) . '" method="post" action="" style="display: flex; align-items: center; gap: 10px; margin-top: 10px;">'; // Always visible form
             echo '<input type="hidden" name="collection_id" value="' . esc_attr($collection->id) . '">';
             echo '<input type="text" name="tweet_id" placeholder="Tweet ID" required>';
             $placeholder = !empty($collection->account_name) ? 'Account Name (default: ' . esc_attr($collection->account_name) . ')' : 'Account Name';
             echo '<input type="text" name="account_name" placeholder="' . esc_attr($placeholder) . '" style="width: 250px;">';
-            echo '<button type="submit" name="add_tweet" style="background-color: #90ee90; color: #fff; border: none; padding: 5px 10px; cursor: pointer; border-radius: 5px;">Add Tweet</button>';
+            echo '<button type="submit" name="add_tweet" class="add-tweet-btn" style="background-color: #90ee90; color: #fff; border: none; padding: 5px 10px; cursor: pointer; border-radius: 5px;">Add Tweet</button>';
             echo '</form>';
             echo '<div id="tweets-list-' . esc_attr($collection->id) . '" class="tweets-list" style="display: none; margin-top: 0; padding-top: 0;">';
             display_tweets_in_collection($collection->id, $account_name_display);
@@ -149,16 +194,28 @@ function display_tweet_collections() {
 // Display tweets in a collection.
 function display_tweets_in_collection($collection_id, $default_account_name) {
     global $wpdb;
-    $tweets = $wpdb->get_results($wpdb->prepare("SELECT * FROM {$wpdb->prefix}tweets WHERE collection_id = %d ORDER BY id DESC", $collection_id));
+    $tweets = $wpdb->get_results($wpdb->prepare("SELECT * FROM {$wpdb->prefix}tweets WHERE collection_id = %d ORDER BY `order` DESC", $collection_id)); // Order by `order` DESC
     if ($tweets) {
         echo '<ul>';
         foreach ($tweets as $tweet) {
-            echo '<li style="border-bottom: 1px dotted #ccc; padding-bottom: 10px; margin-bottom: 10px;">';
+            echo '<li class="tweet-item" style="border-bottom: 1px dotted #ccc; padding-bottom: 10px; margin-bottom: 10px;">';
             echo '<div class="tweet">';
             echo '<p>' . esc_html($tweet->content) . '</p>';
             echo '<form method="post" action="">';
             echo '<input type="hidden" name="tweet_id" value="' . esc_attr($tweet->id) . '">';
             echo '<button type="submit" name="delete_tweet" style="background-color: #ff9999; color: #fff; border: none; padding: 5px 10px; cursor: pointer; border-radius: 5px;">Delete Tweet</button>';
+            echo '</form>';
+            echo '</div>';
+            // Add the green "+" button between tweets
+            echo '<div class="add-tweet-between" style="text-align: center; margin: 10px 0;">';
+            echo '<span class="toggle-add-tweet-between" data-collection-id="' . esc_attr($collection_id) . '" data-tweet-id="' . esc_attr($tweet->id) . '" style="color: lightgreen; font-weight: bold; cursor: pointer;">➕</span>'; // Light green color
+            echo '<form id="add-tweet-between-form-' . esc_attr($collection_id) . '-' . esc_attr($tweet->id) . '" method="post" action="" style="display: none; align-items: center; gap: 10px; margin-top: 10px;">';
+            echo '<input type="hidden" name="collection_id" value="' . esc_attr($collection_id) . '">';
+            echo '<input type="hidden" name="insert_after_tweet_id" value="' . esc_attr($tweet->id) . '">';
+            echo '<input type="text" name="tweet_id" placeholder="Tweet ID" required>';
+            $placeholder = !empty($default_account_name) ? 'Account Name (default: ' . esc_attr($default_account_name) . ')' : 'Account Name';
+            echo '<input type="text" name="account_name" placeholder="' . esc_attr($placeholder) . '" style="width: 250px;">';
+            echo '<button type="submit" name="add_tweet_between" class="add-tweet-btn" style="background-color: #90ee90; color: #fff; border: none; padding: 5px 10px; cursor: pointer; border-radius: 5px;">Add Tweet</button>';
             echo '</form>';
             echo '</div>';
             echo '</li>';
@@ -168,3 +225,4 @@ function display_tweets_in_collection($collection_id, $default_account_name) {
         echo '<p>No tweets found in this collection.</p>';
     }
 }
+?>

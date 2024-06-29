@@ -66,6 +66,7 @@ function tweet_collection_activate() {
         tweet_id varchar(255) NOT NULL,
         account_name varchar(255) NOT NULL,
         content longtext NOT NULL,
+        `order` mediumint(9) NOT NULL DEFAULT 0,
         PRIMARY KEY  (id),
         FOREIGN KEY (collection_id) REFERENCES $collections_table(id) ON DELETE CASCADE
     ) $charset_collate;
@@ -73,6 +74,43 @@ function tweet_collection_activate() {
 
     require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
     dbDelta($sql);
+
+    // Ensure the `order` column is added to the existing table
+    add_order_column_if_not_exists($tweets_table);
+
+    // Populate the `order` column if necessary
+    populate_order_column($tweets_table);
+}
+
+// Function to add `order` column if it doesn't exist
+function add_order_column_if_not_exists($table_name) {
+    global $wpdb;
+
+    $column_exists = $wpdb->get_results($wpdb->prepare(
+        "SHOW COLUMNS FROM $table_name LIKE %s", 'order'
+    ));
+
+    if (empty($column_exists)) {
+        $wpdb->query("ALTER TABLE $table_name ADD `order` mediumint(9) NOT NULL DEFAULT 0");
+    }
+}
+
+// Function to populate the `order` column
+function populate_order_column($table_name) {
+    global $wpdb;
+
+    $tweets = $wpdb->get_results("SELECT * FROM $table_name ORDER BY id ASC");
+    $order = 1;
+    foreach ($tweets as $tweet) {
+        $wpdb->update(
+            $table_name,
+            array('order' => $order),
+            array('id' => $tweet->id),
+            array('%d'),
+            array('%d')
+        );
+        $order++;
+    }
 }
 
 // Hook for plugin deactivation.
@@ -87,16 +125,16 @@ function tweet_collection_enqueue_admin_scripts($hook) {
     if ($hook !== 'toplevel_page_tweet-collection') {
         return;
     }
-    wp_enqueue_style('tweet-collection-style', TWEET_COLLECTION_PLUGIN_URL . 'assets/css/style.css');
-    wp_enqueue_script('tweet-collection-admin-script', TWEET_COLLECTION_PLUGIN_URL . 'assets/js/admin-script.js', array('jquery'), null, true);
-    wp_enqueue_script('tweet-collection-admin-clipboard', TWEET_COLLECTION_PLUGIN_URL . 'assets/js/admin-clipboard.js', array('jquery'), null, true);
+    wp_enqueue_style('tweet-collection-style', TWEET_COLLECTION_PLUGIN_URL . 'assets/css/style.css', array(), time()); // Add version number here
+    wp_enqueue_script('tweet-collection-admin-script', TWEET_COLLECTION_PLUGIN_URL . 'assets/js/admin-script.js', array('jquery'), time(), true); // Add version number here
+    wp_enqueue_script('tweet-collection-admin-clipboard', TWEET_COLLECTION_PLUGIN_URL . 'assets/js/admin-clipboard.js', array('jquery'), time(), true); // Add version number here
 }
 
 // Enqueue scripts and styles for the front end.
 add_action('wp_enqueue_scripts', 'tweet_collection_frontend_enqueue_scripts');
 function tweet_collection_frontend_enqueue_scripts() {
-    wp_enqueue_style('tweet-collection-style', TWEET_COLLECTION_PLUGIN_URL . 'assets/css/style.css');
-    wp_enqueue_script('tweet-collection-script', TWEET_COLLECTION_PLUGIN_URL . 'assets/js/script.js', array('jquery'), null, true);
+    wp_enqueue_style('tweet-collection-style', TWEET_COLLECTION_PLUGIN_URL . 'assets/css/style.css', array(), time()); // Add version number here
+    wp_enqueue_script('tweet-collection-script', TWEET_COLLECTION_PLUGIN_URL . 'assets/js/script.js', array('jquery'), time(), true); // Add version number here
     wp_localize_script('tweet-collection-script', 'ajaxurl', admin_url('admin-ajax.php'));
 }
 

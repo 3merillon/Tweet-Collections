@@ -37,15 +37,20 @@ function add_tweet_to_collection($collection_id, $tweet_id, $account_name) {
     $tweet_url = "https://twitter.com/$account_name/status/$tweet_id";
     $tweet_info = get_tweet_info($tweet_url);
     if ($tweet_info) {
+        // Get the highest order value in the collection
+        $max_order = $wpdb->get_var($wpdb->prepare("SELECT MAX(`order`) FROM {$wpdb->prefix}tweets WHERE collection_id = %d", $collection_id));
+        $new_order = is_null($max_order) ? 1 : $max_order + 1;
+
         $result = $wpdb->insert(
             $wpdb->prefix . 'tweets',
             array(
                 'collection_id' => $collection_id,
                 'tweet_id' => $tweet_id,
                 'account_name' => $account_name,
-                'content' => $tweet_info['content']
+                'content' => $tweet_info['content'],
+                'order' => $new_order // Set the order value
             ),
-            array('%d', '%s', '%s', '%s')
+            array('%d', '%s', '%s', '%s', '%d')
         );
 
         if ($result === false) {
@@ -93,3 +98,45 @@ function get_collection_account_name($collection_id) {
     $collection = $wpdb->get_row($wpdb->prepare("SELECT account_name FROM {$wpdb->prefix}tweet_collections WHERE id = %d", $collection_id));
     return $collection ? $collection->account_name : '';
 }
+
+// Function to add a tweet to a collection between existing tweets.
+function add_tweet_to_collection_between($collection_id, $tweet_id, $account_name, $insert_after_tweet_id) {
+    global $wpdb;
+
+    // Get the tweet information.
+    $tweet_url = "https://twitter.com/$account_name/status/$tweet_id";
+    $tweet_info = get_tweet_info($tweet_url);
+
+    if ($tweet_info) {
+        // Get the order of the tweet after which the new tweet will be inserted.
+        $insert_after_tweet = $wpdb->get_row($wpdb->prepare("SELECT `order` FROM {$wpdb->prefix}tweets WHERE id = %d", $insert_after_tweet_id));
+        $new_order = $insert_after_tweet->order;
+
+        // Update the order of tweets that come after the new tweet.
+        $wpdb->query($wpdb->prepare("UPDATE {$wpdb->prefix}tweets SET `order` = `order` + 1 WHERE collection_id = %d AND `order` >= %d", $collection_id, $new_order));
+
+        // Insert the new tweet.
+        $result = $wpdb->insert(
+            $wpdb->prefix . 'tweets',
+            array(
+                'collection_id' => $collection_id,
+                'tweet_id' => $tweet_id,
+                'account_name' => $account_name,
+                'content' => $tweet_info['content'],
+                'order' => $new_order
+            ),
+            array('%d', '%s', '%s', '%s', '%d')
+        );
+
+        if ($result === false) {
+            error_log('Failed to add tweet to collection: ' . $wpdb->last_error);
+            return false;
+        }
+
+        return true;
+    } else {
+        error_log('Invalid Tweet credentials: ' . $tweet_url);
+        return false;
+    }
+}
+?>

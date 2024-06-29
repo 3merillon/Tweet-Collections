@@ -35,6 +35,13 @@
     margin-left: 10px;
 }
 
+.collection .toggle-add-tweet, .toggle-add-tweet-between {
+    color: lightgreen; /* Light green color */
+    font-weight: bold;
+    cursor: pointer;
+    margin-left: 10px;
+}
+
 .collection form {
     display: flex;
     align-items: center;
@@ -57,6 +64,7 @@
     width: 100%; /* Ensure each tweet takes up the full width */
     max-width: 550px; /* Optional: set a max width for the tweets */
     text-align: center; /* Center the tweet embed */
+    position: relative; /* Relative positioning for the loading bar */
 }
 
 .tweet iframe {
@@ -108,4 +116,10 @@
     100% {
         transform: rotate(360deg);
     }
+}
+
+/* Highlight new tweet */
+.new-tweet {
+    background-color: #ffffcc; /* Light yellow background */
+    transition: background-color 1s ease;
 }
