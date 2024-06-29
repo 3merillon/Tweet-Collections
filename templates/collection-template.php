@@ -7,7 +7,7 @@ if (!defined('ABSPATH')) {
 global $wpdb;
 $collection_id = intval($atts['id']);
 $initial_tweets = get_post_meta($collection_id, 'initial_tweets', true) ?: 3; // Default to 3 if not set
-$tweets = $wpdb->get_results($wpdb->prepare("SELECT * FROM {$wpdb->prefix}tweets WHERE collection_id = %d ORDER BY `order` DESC", $collection_id));
+$tweets = $wpdb->get_results($wpdb->prepare("SELECT * FROM {$wpdb->prefix}tweets WHERE collection_id = %d ORDER BY `order` ASC", $collection_id));
 
 if ($tweets) {
     echo '<div class="tweet-collection" data-initial-tweets="' . esc_attr($initial_tweets) . '">';

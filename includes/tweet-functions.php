@@ -37,9 +37,9 @@ function add_tweet_to_collection($collection_id, $tweet_id, $account_name) {
     $tweet_url = "https://twitter.com/$account_name/status/$tweet_id";
     $tweet_info = get_tweet_info($tweet_url);
     if ($tweet_info) {
-        // Get the highest order value in the collection
-        $max_order = $wpdb->get_var($wpdb->prepare("SELECT MAX(`order`) FROM {$wpdb->prefix}tweets WHERE collection_id = %d", $collection_id));
-        $new_order = is_null($max_order) ? 1 : $max_order + 1;
+        // Get the lowest order value in the collection
+        $min_order = $wpdb->get_var($wpdb->prepare("SELECT MIN(`order`) FROM {$wpdb->prefix}tweets WHERE collection_id = %d", $collection_id));
+        $new_order = is_null($min_order) ? 1 : $min_order - 1;
 
         $result = $wpdb->insert(
             $wpdb->prefix . 'tweets',
@@ -110,10 +110,10 @@ function add_tweet_to_collection_between($collection_id, $tweet_id, $account_nam
     if ($tweet_info) {
         // Get the order of the tweet after which the new tweet will be inserted.
         $insert_after_tweet = $wpdb->get_row($wpdb->prepare("SELECT `order` FROM {$wpdb->prefix}tweets WHERE id = %d", $insert_after_tweet_id));
-        $new_order = $insert_after_tweet->order;
+        $new_order = $insert_after_tweet->order + 1;
 
         // Update the order of tweets that come after the new tweet.
-        $wpdb->query($wpdb->prepare("UPDATE {$wpdb->prefix}tweets SET `order` = `order` + 1 WHERE collection_id = %d AND `order` >= %d", $collection_id, $new_order));
+        $wpdb->query($wpdb->prepare("UPDATE {$wpdb->prefix}tweets SET `order` = `order` + 1 WHERE collection_id = %d AND `order` > %d", $collection_id, $insert_after_tweet->order));
 
         // Insert the new tweet.
         $result = $wpdb->insert(

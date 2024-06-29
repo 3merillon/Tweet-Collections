@@ -194,7 +194,7 @@ function display_tweet_collections() {
 // Display tweets in a collection.
 function display_tweets_in_collection($collection_id, $default_account_name) {
     global $wpdb;
-    $tweets = $wpdb->get_results($wpdb->prepare("SELECT * FROM {$wpdb->prefix}tweets WHERE collection_id = %d ORDER BY `order` DESC", $collection_id)); // Order by `order` DESC
+    $tweets = $wpdb->get_results($wpdb->prepare("SELECT * FROM {$wpdb->prefix}tweets WHERE collection_id = %d ORDER BY `order` ASC", $collection_id)); // Order by `order` ASC
     if ($tweets) {
         echo '<ul>';
         foreach ($tweets as $tweet) {
