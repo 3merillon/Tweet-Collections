@@ -29,6 +29,7 @@ function tweet_collection_admin_page() {
         <hr style="border-top: 3px solid #000;">
         <h2 style="color: blue; font-weight: bold;">Add New Collection</h2>
         <form id="add-collection-form" method="post" action="" style="display: flex; align-items: center; gap: 10px;">
+            <?php wp_nonce_field('add_collection_action', 'add_collection_nonce'); ?>
             <input type="text" name="collection_name" placeholder="Collection Name" required>
             <input type="text" name="collection_account_name" placeholder="Account Name" style="width: 250px;">
             <button type="submit" name="add_collection" style="background-color: #28a745; color: #fff; border: none; padding: 5px 10px; cursor: pointer; border-radius: 5px;">Add Collection</button>
@@ -45,6 +46,12 @@ function tweet_collection_admin_page() {
 
 // Handle form submissions.
 if (isset($_POST['add_collection'])) {
+    if (!current_user_can('manage_options')) {
+        wp_die('You do not have sufficient permissions to access this page.');
+    }
+    if (!isset($_POST['add_collection_nonce']) || !wp_verify_nonce($_POST['add_collection_nonce'], 'add_collection_action')) {
+        die('Security check failed.');
+    }
     $collection_name = sanitize_text_field($_POST['collection_name']);
     $collection_account_name = sanitize_text_field($_POST['collection_account_name']);
     if (!empty($collection_name)) {
@@ -63,6 +70,12 @@ if (isset($_POST['add_collection'])) {
 }
 
 if (isset($_POST['delete_collection'])) {
+    if (!current_user_can('manage_options')) {
+        wp_die('You do not have sufficient permissions to access this page.');
+    }
+    if (!isset($_POST['delete_collection_nonce']) || !wp_verify_nonce($_POST['delete_collection_nonce'], 'delete_collection_action')) {
+        die('Security check failed.');
+    }
     $collection_id = intval($_POST['collection_id']);
     if (function_exists('delete_tweet_collection')) {
         delete_tweet_collection($collection_id);
@@ -74,6 +87,12 @@ if (isset($_POST['delete_collection'])) {
 }
 
 if (isset($_POST['add_tweet'])) {
+    if (!current_user_can('manage_options')) {
+        wp_die('You do not have sufficient permissions to access this page.');
+    }
+    if (!isset($_POST['add_tweet_nonce']) || !wp_verify_nonce($_POST['add_tweet_nonce'], 'add_tweet_action')) {
+        die('Security check failed.');
+    }
     $collection_id = intval($_POST['collection_id']);
     $tweet_id = sanitize_text_field($_POST['tweet_id']);
     $account_name = sanitize_text_field($_POST['account_name']);
@@ -100,6 +119,12 @@ if (isset($_POST['add_tweet'])) {
 }
 
 if (isset($_POST['add_tweet_between'])) {
+    if (!current_user_can('manage_options')) {
+        wp_die('You do not have sufficient permissions to access this page.');
+    }
+    if (!isset($_POST['add_tweet_between_nonce']) || !wp_verify_nonce($_POST['add_tweet_between_nonce'], 'add_tweet_between_action')) {
+        die('Security check failed.');
+    }
     $collection_id = intval($_POST['collection_id']);
     $tweet_id = sanitize_text_field($_POST['tweet_id']);
     $account_name = sanitize_text_field($_POST['account_name']);
@@ -127,6 +152,12 @@ if (isset($_POST['add_tweet_between'])) {
 }
 
 if (isset($_POST['delete_tweet'])) {
+    if (!current_user_can('manage_options')) {
+        wp_die('You do not have sufficient permissions to access this page.');
+    }
+    if (!isset($_POST['delete_tweet_nonce']) || !wp_verify_nonce($_POST['delete_tweet_nonce'], 'delete_tweet_action')) {
+        die('Security check failed.');
+    }
     $tweet_id = intval($_POST['tweet_id']);
     if (function_exists('delete_tweet_from_collection')) {
         delete_tweet_from_collection($tweet_id);
@@ -139,6 +170,12 @@ if (isset($_POST['delete_tweet'])) {
 
 // Save initial number of tweets setting for each collection
 if (isset($_POST['initial_tweets']) && isset($_POST['collection_id'])) {
+    if (!current_user_can('manage_options')) {
+        wp_die('You do not have sufficient permissions to access this page.');
+    }
+    if (!isset($_POST['initial_tweets_nonce']) || !wp_verify_nonce($_POST['initial_tweets_nonce'], 'initial_tweets_action')) {
+        die('Security check failed.');
+    }
     $initial_tweets = intval($_POST['initial_tweets']);
     $collection_id = intval($_POST['collection_id']);
     update_post_meta($collection_id, 'initial_tweets', $initial_tweets);
@@ -165,11 +202,13 @@ function display_tweet_collections() {
             echo '<label for="initial_tweets" style="margin-right: 10px;">Initial number of tweets:</label>';
             echo '<input type="number" name="initial_tweets" value="' . esc_attr($initial_tweets) . '" style="width: 60px; margin-right: 10px;">';
             echo '<input type="hidden" name="collection_id" value="' . esc_attr($collection->id) . '">';
+            wp_nonce_field('initial_tweets_action', 'initial_tweets_nonce');
             echo '<button type="submit" style="background-color: #0073aa; color: #fff; border: none; padding: 5px 10px; cursor: pointer; border-radius: 5px;">Save</button>';
             echo '</form>';
             echo '</div>';
             echo '<form method="post" action="" onsubmit="return confirm(\'This will delete this entire Tweet Collection. Are you sure you wish to proceed?\');">';
             echo '<input type="hidden" name="collection_id" value="' . esc_attr($collection->id) . '">';
+            wp_nonce_field('delete_collection_action', 'delete_collection_nonce');
             echo '<button type="submit" name="delete_collection" style="background-color: #ff0000; color: #fff; border: none; padding: 5px 10px; cursor: pointer; border-radius: 5px;">Delete Collection</button>';
             echo '</form>';
             echo '</div>';
@@ -179,6 +218,7 @@ function display_tweet_collections() {
             echo '<input type="text" name="tweet_id" placeholder="Tweet ID" required>';
             $placeholder = !empty($collection->account_name) ? 'Account Name (default: ' . esc_attr($collection->account_name) . ')' : 'Account Name';
             echo '<input type="text" name="account_name" placeholder="' . esc_attr($placeholder) . '" style="width: 250px;">';
+            wp_nonce_field('add_tweet_action', 'add_tweet_nonce');
             echo '<button type="submit" name="add_tweet" class="add-tweet-btn" style="background-color: #90ee90; color: #fff; border: none; padding: 5px 10px; cursor: pointer; border-radius: 5px;">Add Tweet</button>';
             echo '</form>';
             echo '<div id="tweets-list-' . esc_attr($collection->id) . '" class="tweets-list" style="display: none; margin-top: 0; padding-top: 0;">';
@@ -203,6 +243,7 @@ function display_tweets_in_collection($collection_id, $default_account_name) {
             echo '<p>' . esc_html($tweet->content) . '</p>';
             echo '<form method="post" action="">';
             echo '<input type="hidden" name="tweet_id" value="' . esc_attr($tweet->id) . '">';
+            wp_nonce_field('delete_tweet_action', 'delete_tweet_nonce');
             echo '<button type="submit" name="delete_tweet" style="background-color: #ff9999; color: #fff; border: none; padding: 5px 10px; cursor: pointer; border-radius: 5px;">Delete Tweet</button>';
             echo '</form>';
             echo '</div>';
@@ -215,6 +256,7 @@ function display_tweets_in_collection($collection_id, $default_account_name) {
             echo '<input type="text" name="tweet_id" placeholder="Tweet ID" required>';
             $placeholder = !empty($default_account_name) ? 'Account Name (default: ' . esc_attr($default_account_name) . ')' : 'Account Name';
             echo '<input type="text" name="account_name" placeholder="' . esc_attr($placeholder) . '" style="width: 250px;">';
+            wp_nonce_field('add_tweet_between_action', 'add_tweet_between_nonce');
             echo '<button type="submit" name="add_tweet_between" class="add-tweet-btn" style="background-color: #90ee90; color: #fff; border: none; padding: 5px 10px; cursor: pointer; border-radius: 5px;">Add Tweet</button>';
             echo '</form>';
             echo '</div>';

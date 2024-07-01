@@ -14,15 +14,13 @@ jQuery(document).ready(function($) {
             var tweet = hiddenTweets.first();
             tweet.slideDown(function() {
                 loadTweetEmbed(tweet, function() {
-                    waitForLoadingBarToDisappear(tweet, function() {
-                        isLoading = false;
-                        // Check if more tweets need to be loaded
-                        if (hiddenTweets.length > 1) {
-                            checkLoadingZoneVisibility();
-                        } else {
-                            loadingIndicator.hide();
-                        }
-                    });
+                    isLoading = false;
+                    // Check if more tweets need to be loaded
+                    if (hiddenTweets.length > 1) {
+                        checkLoadingZoneVisibility();
+                    } else {
+                        loadingIndicator.hide();
+                    }
                 });
             });
         } else {
@@ -56,16 +54,6 @@ jQuery(document).ready(function($) {
         });
     }
 
-    function waitForLoadingBarToDisappear(element, callback) {
-        var loadingBar = element.find('.loading-bar');
-        var interval = setInterval(function() {
-            if (!loadingBar.is(':visible')) {
-                clearInterval(interval);
-                callback();
-            }
-        }, 100); // Check every 100ms
-    }
-
     function isElementInViewport(el) {
         var rect = el.getBoundingClientRect();
         return (
@@ -81,21 +69,6 @@ jQuery(document).ready(function($) {
             loadMoreTweets();
         }
     }
-
-    // Use MutationObserver to detect changes in the tweet container
-    var observer = new MutationObserver(function(mutations) {
-        mutations.forEach(function(mutation) {
-            if (mutation.type === 'childList') {
-                checkLoadingZoneVisibility();
-            }
-        });
-    });
-
-    // Observe changes in the tweet container
-    observer.observe(tweetContainer[0], {
-        childList: true,
-        subtree: true
-    });
 
     // Initially hide all tweets except the first `initialTweets`.
     tweetContainer.find('.tweet').hide().slice(0, initialTweets).each(function() {
