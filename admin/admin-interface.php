@@ -46,12 +46,6 @@ function tweet_collection_admin_page() {
 
 // Handle form submissions.
 if (isset($_POST['add_collection'])) {
-    if (!current_user_can('manage_options')) {
-        wp_die('You do not have sufficient permissions to access this page.');
-    }
-    if (!isset($_POST['add_collection_nonce']) || !wp_verify_nonce($_POST['add_collection_nonce'], 'add_collection_action')) {
-        die('Security check failed.');
-    }
     $collection_name = sanitize_text_field($_POST['collection_name']);
     $collection_account_name = sanitize_text_field($_POST['collection_account_name']);
     if (!empty($collection_name)) {
@@ -70,12 +64,6 @@ if (isset($_POST['add_collection'])) {
 }
 
 if (isset($_POST['delete_collection'])) {
-    if (!current_user_can('manage_options')) {
-        wp_die('You do not have sufficient permissions to access this page.');
-    }
-    if (!isset($_POST['delete_collection_nonce']) || !wp_verify_nonce($_POST['delete_collection_nonce'], 'delete_collection_action')) {
-        die('Security check failed.');
-    }
     $collection_id = intval($_POST['collection_id']);
     if (function_exists('delete_tweet_collection')) {
         delete_tweet_collection($collection_id);
@@ -87,12 +75,6 @@ if (isset($_POST['delete_collection'])) {
 }
 
 if (isset($_POST['add_tweet'])) {
-    if (!current_user_can('manage_options')) {
-        wp_die('You do not have sufficient permissions to access this page.');
-    }
-    if (!isset($_POST['add_tweet_nonce']) || !wp_verify_nonce($_POST['add_tweet_nonce'], 'add_tweet_action')) {
-        die('Security check failed.');
-    }
     $collection_id = intval($_POST['collection_id']);
     $tweet_id = sanitize_text_field($_POST['tweet_id']);
     $account_name = sanitize_text_field($_POST['account_name']);
@@ -119,12 +101,6 @@ if (isset($_POST['add_tweet'])) {
 }
 
 if (isset($_POST['add_tweet_between'])) {
-    if (!current_user_can('manage_options')) {
-        wp_die('You do not have sufficient permissions to access this page.');
-    }
-    if (!isset($_POST['add_tweet_between_nonce']) || !wp_verify_nonce($_POST['add_tweet_between_nonce'], 'add_tweet_between_action')) {
-        die('Security check failed.');
-    }
     $collection_id = intval($_POST['collection_id']);
     $tweet_id = sanitize_text_field($_POST['tweet_id']);
     $account_name = sanitize_text_field($_POST['account_name']);
@@ -152,12 +128,6 @@ if (isset($_POST['add_tweet_between'])) {
 }
 
 if (isset($_POST['delete_tweet'])) {
-    if (!current_user_can('manage_options')) {
-        wp_die('You do not have sufficient permissions to access this page.');
-    }
-    if (!isset($_POST['delete_tweet_nonce']) || !wp_verify_nonce($_POST['delete_tweet_nonce'], 'delete_tweet_action')) {
-        die('Security check failed.');
-    }
     $tweet_id = intval($_POST['tweet_id']);
     if (function_exists('delete_tweet_from_collection')) {
         delete_tweet_from_collection($tweet_id);
@@ -170,12 +140,6 @@ if (isset($_POST['delete_tweet'])) {
 
 // Save initial number of tweets setting for each collection
 if (isset($_POST['initial_tweets']) && isset($_POST['collection_id'])) {
-    if (!current_user_can('manage_options')) {
-        wp_die('You do not have sufficient permissions to access this page.');
-    }
-    if (!isset($_POST['initial_tweets_nonce']) || !wp_verify_nonce($_POST['initial_tweets_nonce'], 'initial_tweets_action')) {
-        die('Security check failed.');
-    }
     $initial_tweets = intval($_POST['initial_tweets']);
     $collection_id = intval($_POST['collection_id']);
     update_post_meta($collection_id, 'initial_tweets', $initial_tweets);

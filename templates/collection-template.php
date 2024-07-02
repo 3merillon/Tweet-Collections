@@ -10,6 +10,7 @@ $initial_tweets = get_post_meta($collection_id, 'initial_tweets', true) ?: 3; //
 $tweets = $wpdb->get_results($wpdb->prepare("SELECT * FROM {$wpdb->prefix}tweets WHERE collection_id = %d ORDER BY `order` ASC", $collection_id));
 
 if ($tweets) {
+    $total_tweets = count($tweets);
     echo '<div class="tweet-collection" data-initial-tweets="' . esc_attr($initial_tweets) . '">';
     foreach ($tweets as $index => $tweet) {
         // Only show the first `initial_tweets` initially
@@ -19,8 +20,10 @@ if ($tweets) {
         echo '<div class="tweet-placeholder">Loading tweet...</div>';
         echo '</div>';
     }
-    // Add a loading zone at the bottom
-    echo '<div class="loading-zone" style="text-align: center; margin: 20px 0;"><div class="loading-icon">C</div></div>';
+    // Add a loading zone at the bottom if initial tweets is less than total tweets
+    if ($initial_tweets < $total_tweets) {
+        echo '<div class="loading-zone" style="text-align: center; margin: 20px 0;"><div class="loading-icon">C</div></div>';
+    }
     echo '</div>';
 } else {
     echo '<p>No tweets found in this collection.</p>';

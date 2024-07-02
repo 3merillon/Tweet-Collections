@@ -4,6 +4,7 @@ jQuery(document).ready(function($) {
     var loadingIndicator = $('.loading-icon');
     var isLoading = false;
     var initialTweets = parseInt(tweetContainer.data('initial-tweets')) || 3; // Get initial tweets from data attribute or default to 3
+    var totalTweets = tweetContainer.find('.tweet').length;
 
     function loadMoreTweets() {
         if (isLoading) return;
@@ -19,7 +20,7 @@ jQuery(document).ready(function($) {
                     if (hiddenTweets.length > 1) {
                         checkLoadingZoneVisibility();
                     } else {
-                        loadingIndicator.hide();
+                        loadingZone.remove(); // Remove the loading zone upon starting to load the last tweet
                     }
                 });
             });
@@ -79,7 +80,9 @@ jQuery(document).ready(function($) {
     });
 
     // Check loading zone visibility after initial tweets are shown
-    setTimeout(checkLoadingZoneVisibility, 100);
+    if (initialTweets < totalTweets) {
+        setTimeout(checkLoadingZoneVisibility, 100);
+    }
 
     $(window).on('scroll', function() {
         checkLoadingZoneVisibility();
