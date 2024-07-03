@@ -142,6 +142,18 @@ function get_tweet_embed() {
     $embed_code = wp_oembed_get($tweet_url);
 
     if ($embed_code) {
+        $doc = new DOMDocument();
+        @$doc->loadHTML($embed_code);
+        $blockquote = $doc->getElementsByTagName('blockquote')->item(0);
+        if ($blockquote) {
+            $theme = isset($_POST['data_theme']) ? sanitize_text_field($_POST['data_theme']) : 'dark';
+            if ($theme === 'dark') {
+                $blockquote->setAttribute('data-theme', 'dark');
+            } else {
+                $blockquote->removeAttribute('data-theme');
+            }
+            $embed_code = $doc->saveHTML($blockquote);
+        }
         wp_send_json_success($embed_code);
     } else {
         wp_send_json_error('Unable to fetch embed code.');

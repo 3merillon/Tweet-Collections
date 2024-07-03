@@ -32,6 +32,10 @@ function tweet_collection_admin_page() {
             <?php wp_nonce_field('add_collection_action', 'add_collection_nonce'); ?>
             <input type="text" name="collection_name" placeholder="Collection Name" required>
             <input type="text" name="collection_account_name" placeholder="Account Name" style="width: 250px;">
+            <select name="collection_theme" style="margin-left: 10px;">
+                <option value="dark" selected>Dark</option>
+                <option value="light">Light</option>
+            </select>
             <button type="submit" name="add_collection" style="background-color: #28a745; color: #fff; border: none; padding: 5px 10px; cursor: pointer; border-radius: 5px;">Add Collection</button>
         </form>
         <hr style="border-top: 3px solid #000;">
@@ -48,9 +52,10 @@ function tweet_collection_admin_page() {
 if (isset($_POST['add_collection'])) {
     $collection_name = sanitize_text_field($_POST['collection_name']);
     $collection_account_name = sanitize_text_field($_POST['collection_account_name']);
+    $collection_theme = sanitize_text_field($_POST['collection_theme']);
     if (!empty($collection_name)) {
         if (function_exists('add_tweet_collection')) {
-            add_tweet_collection($collection_name, $collection_account_name);
+            add_tweet_collection($collection_name, $collection_account_name, $collection_theme);
         } else {
             add_action('admin_notices', function() {
                 echo '<div class="notice notice-error is-dismissible"><p>Function add_tweet_collection not found.</p></div>';
@@ -145,6 +150,13 @@ if (isset($_POST['initial_tweets']) && isset($_POST['collection_id'])) {
     update_post_meta($collection_id, 'initial_tweets', $initial_tweets);
 }
 
+// Save theme setting for each collection
+if (isset($_POST['theme']) && isset($_POST['collection_id'])) {
+    $theme = sanitize_text_field($_POST['theme']);
+    $collection_id = intval($_POST['collection_id']);
+    update_collection_theme($collection_id, $theme);
+}
+
 // Display tweet collections.
 function display_tweet_collections() {
     global $wpdb;
@@ -154,6 +166,7 @@ function display_tweet_collections() {
             $account_name_display = !empty($collection->account_name) ? ' (' . esc_html($collection->account_name) . ')' : '';
             $shortcode = '[tweet_collection id="' . esc_html($collection->id) . '"]';
             $initial_tweets = get_post_meta($collection->id, 'initial_tweets', true) ?: 3; // Default to 3 if not set
+            $theme = $collection->theme ?: 'dark'; // Default to dark if not set
             echo '<div class="collection" data-collection-id="' . esc_attr($collection->id) . '" style="border-bottom: 2px solid #ccc; padding-bottom: 10px; margin-bottom: 10px;">';
             echo '<div style="display: flex; align-items: center; justify-content: space-between; padding-bottom:10px;">';
             echo '<div style="display: flex; align-items: center;">';
@@ -167,6 +180,17 @@ function display_tweet_collections() {
             echo '<input type="number" name="initial_tweets" value="' . esc_attr($initial_tweets) . '" style="width: 60px; margin-right: 10px;">';
             echo '<input type="hidden" name="collection_id" value="' . esc_attr($collection->id) . '">';
             wp_nonce_field('initial_tweets_action', 'initial_tweets_nonce');
+            echo '<button type="submit" style="background-color: #0073aa; color: #fff; border: none; padding: 5px 10px; cursor: pointer; border-radius: 5px;">Save</button>';
+            echo '</form>';
+            // Add dropdown for theme selection
+            echo '<form method="post" action="" style="margin-left: 10px; display: flex; align-items: center;">';
+            echo '<label for="theme" style="margin-right: 10px;">Theme:</label>';
+            echo '<select name="theme" style="margin-right: 10px;">';
+            echo '<option value="dark"' . selected($theme, 'dark', false) . '>Dark</option>';
+            echo '<option value="light"' . selected($theme, 'light', false) . '>Light</option>';
+            echo '</select>';
+            echo '<input type="hidden" name="collection_id" value="' . esc_attr($collection->id) . '">';
+            wp_nonce_field('theme_action', 'theme_nonce');
             echo '<button type="submit" style="background-color: #0073aa; color: #fff; border: none; padding: 5px 10px; cursor: pointer; border-radius: 5px;">Save</button>';
             echo '</form>';
             echo '</div>';

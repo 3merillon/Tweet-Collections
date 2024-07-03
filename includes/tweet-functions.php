@@ -5,15 +5,16 @@ if (!defined('ABSPATH')) {
 }
 
 // Function to add a new tweet collection.
-function add_tweet_collection($name, $account_name = '') {
+function add_tweet_collection($name, $account_name = '', $theme = 'dark') {
     global $wpdb;
     $result = $wpdb->insert(
         $wpdb->prefix . 'tweet_collections',
         array(
             'name' => sanitize_text_field($name),
-            'account_name' => sanitize_text_field($account_name)
+            'account_name' => sanitize_text_field($account_name),
+            'theme' => sanitize_text_field($theme)
         ),
-        array('%s', '%s')
+        array('%s', '%s', '%s')
     );
 
     if ($result === false) {
@@ -138,6 +139,22 @@ function add_tweet_to_collection_between($collection_id, $tweet_id, $account_nam
     } else {
         error_log('Invalid Tweet credentials: ' . $tweet_url);
         return false;
+    }
+}
+
+// Function to update the theme of a collection.
+function update_collection_theme($collection_id, $theme) {
+    global $wpdb;
+    $result = $wpdb->update(
+        $wpdb->prefix . 'tweet_collections',
+        array('theme' => sanitize_text_field($theme)),
+        array('id' => intval($collection_id)),
+        array('%s'),
+        array('%d')
+    );
+
+    if ($result === false) {
+        error_log('Failed to update collection theme: ' . $wpdb->last_error);
     }
 }
 ?>
