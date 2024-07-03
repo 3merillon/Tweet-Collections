@@ -77,9 +77,6 @@ function tweet_collection_activate() {
 
     // Ensure the `order` column is added to the existing table
     add_order_column_if_not_exists($tweets_table);
-
-    // Populate the `order` column if necessary
-    populate_order_column($tweets_table);
 }
 
 // Function to add `order` column if it doesn't exist
@@ -92,24 +89,6 @@ function add_order_column_if_not_exists($table_name) {
 
     if (empty($column_exists)) {
         $wpdb->query("ALTER TABLE $table_name ADD `order` mediumint(9) NOT NULL DEFAULT 0");
-    }
-}
-
-// Function to populate the `order` column
-function populate_order_column($table_name) {
-    global $wpdb;
-
-    $tweets = $wpdb->get_results("SELECT * FROM $table_name ORDER BY id ASC");
-    $order = 1;
-    foreach ($tweets as $tweet) {
-        $wpdb->update(
-            $table_name,
-            array('order' => $order),
-            array('id' => $tweet->id),
-            array('%d'),
-            array('%d')
-        );
-        $order++;
     }
 }
 
@@ -168,3 +147,4 @@ function get_tweet_embed() {
         wp_send_json_error('Unable to fetch embed code.');
     }
 }
+?>
