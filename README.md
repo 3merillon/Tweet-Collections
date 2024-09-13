@@ -38,6 +38,10 @@ Tweet Collection is a WordPress plugin that allows you to create and manage coll
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
+## Demo
+
+You can see it in action on my website https://cyrilmonkewitz.com/musical-tweets/
+
 ## Author
 
 Cyril Monkewitz
