@@ -75,6 +75,9 @@ jQuery(document).ready(function($) {
     }
 
     function isElementInViewport(el) {
+        if (!el) {
+            return false; // Element is undefined, return false
+        }
         var rect = el.getBoundingClientRect();
         return (
             rect.top >= 0 &&
@@ -85,7 +88,7 @@ jQuery(document).ready(function($) {
     }
 
     function checkLoadingZoneVisibility() {
-        if (isElementInViewport(loadingZone[0])) {
+        if (loadingZone.length && isElementInViewport(loadingZone[0])) {
             loadMoreTweets();
         }
     }
